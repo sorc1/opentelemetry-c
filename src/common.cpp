@@ -17,6 +17,7 @@
 #include <opentelemetry/trace/propagation/http_trace_context.h>
 #include "attributes_iterable.h"
 #include "headers_carrier.h"
+#include "tracer.h"
 
 namespace common = OPENTELEMETRY_NAMESPACE::common;
 namespace context = OPENTELEMETRY_NAMESPACE::context;
@@ -195,8 +196,8 @@ extern "C" opentelemetry_tracer *opentelemetry_provider_get_tracer(opentelemetry
 		if (schema_url == NULL)
 			schema_url = "";
 		auto provider = reinterpret_cast<trace::TracerProvider *>(provider_);
-		auto tracer = new nostd::shared_ptr<trace::Tracer>(provider->GetTracer(
-			library_name, library_version, schema_url));
+		auto tracer = new trace::OpentelemetryCTracer(nostd::shared_ptr<trace::Tracer>(
+			provider->GetTracer(library_name, library_version, schema_url)));
 		return reinterpret_cast<opentelemetry_tracer *>(tracer);
 	} catch (...) {
 		return NULL;
@@ -205,7 +206,7 @@ extern "C" opentelemetry_tracer *opentelemetry_provider_get_tracer(opentelemetry
 
 extern "C" void opentelemetry_tracer_destroy(opentelemetry_tracer *tracer_) {
 	try {
-		auto tracer = reinterpret_cast<nostd::shared_ptr<trace::Tracer>*>(tracer_);
+		auto tracer = reinterpret_cast<trace::OpentelemetryCTracer*>(tracer_);
 		if (tracer == NULL)
 			return;
 		delete tracer;
@@ -215,7 +216,7 @@ extern "C" void opentelemetry_tracer_destroy(opentelemetry_tracer *tracer_) {
 
 extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer_, const opentelemetry_string *name, opentelemetry_span *parent_span) {
 	try {
-		auto tracer = reinterpret_cast<nostd::shared_ptr<trace::Tracer>*>(tracer_);
+		auto tracer = reinterpret_cast<trace::OpentelemetryCTracer*>(tracer_);
 
 		if (parent_span == NULL) {
 			auto span = new nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len)));
@@ -281,7 +282,7 @@ extern "C" int opentelemetry_span_headers_get(opentelemetry_span *span_, opentel
 
 extern "C" opentelemetry_span *opentelemetry_span_start_headers(opentelemetry_tracer *tracer_, const opentelemetry_string *name, opentelemetry_header_value header_value, void *header_value_arg) {
 	try {
-		auto tracer = reinterpret_cast<nostd::shared_ptr<trace::Tracer>*>(tracer_);
+		auto tracer = reinterpret_cast<trace::OpentelemetryCTracer*>(tracer_);
 		context::propagation::OpentelemetryCHeadersExtractor extractor(header_value, header_value_arg);
 		context::Context c;
 		context::Context context = trace::propagation::HttpTraceContext().Extract(extractor, c);
