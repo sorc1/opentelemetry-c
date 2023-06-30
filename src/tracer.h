@@ -12,8 +12,12 @@ public:
         _tracer(std::move(tracer)) {}
     Tracer *get() { return _tracer.get(); }
 
+    void LimitSpanSize(bool enable) { has_span_size_limit = enable; }
+    bool HasSpanSizeLimit() { return has_span_size_limit; }
+
 private:
     nostd::shared_ptr<Tracer> _tracer;
+    bool has_span_size_limit = false;
 };
 
 }  // namespace common

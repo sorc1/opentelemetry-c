@@ -8,6 +8,7 @@ set(TESTS
 	jaeger_span
 	otlp_http_span
 	span_headers
+	span_size_limit
 )
 
 add_library(testutils STATIC utils.c)

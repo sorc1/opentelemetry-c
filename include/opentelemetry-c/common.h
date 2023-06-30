@@ -185,6 +185,7 @@ opentelemetry_provider *opentelemetry_provider_create(
 void opentelemetry_provider_destroy(opentelemetry_provider *provider);
 
 opentelemetry_tracer *opentelemetry_provider_get_tracer(opentelemetry_provider *provider, const char *library_name, const char *library_version, const char *schema_url);
+void opentelemetry_tracer_limit_span_size(opentelemetry_tracer *tracer, bool enable);
 void opentelemetry_tracer_destroy(opentelemetry_tracer *tracer);
 
 opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer, const opentelemetry_string *name, opentelemetry_span *parent_span);

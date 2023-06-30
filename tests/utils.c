@@ -21,6 +21,59 @@ uint16_t test_jaeger_port(void) {
 	return v;
 }
 
+char *create_test_string(size_t size) {
+	static const char string_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	char *buf = malloc(size);
+
+	if (buf == NULL)
+		return NULL;
+
+	for (size_t i = 0, j = 0; i != size; i++, j = (j + 1) % (sizeof(string_chars) - 1))
+		buf[i] = string_chars[j];
+	return buf;
+}
+
+bool *create_test_ab(size_t len) {
+	bool *buf = malloc(len);
+
+	if (buf == NULL)
+		return NULL;
+	bool cur_value = false;
+	for (size_t i = 0; i != len; i++, cur_value = !cur_value)
+		buf[i] = cur_value;
+	return buf;
+}
+
+int32_t *create_test_ai32(size_t len) {
+	int32_t *buf = malloc(len * sizeof(*buf));
+
+	if (buf == NULL)
+		return NULL;
+	for (size_t i = 0; i != len; i++)
+		buf[i] = i;
+	return buf;
+}
+
+int64_t *create_test_ai64(size_t len) {
+	int64_t *buf = malloc(len * sizeof(*buf));
+
+	if (buf == NULL)
+		return NULL;
+	for (size_t i = 0; i != len; i++)
+		buf[i] = i;
+	return buf;
+}
+
+double *create_test_ad(size_t len) {
+	double *buf = malloc(len * sizeof(*buf));
+
+	if (buf == NULL)
+		return NULL;
+	for (size_t i = 0; i != len; i++)
+		buf[i] = i;
+	return buf;
+}
+
 int test_span(opentelemetry_processor *processor) {
 	double dvalues[] = {1.1, 2.2, 3.3};
 	opentelemetry_string svalues[] = {OPENTELEMETRY_CSTR("value1"), OPENTELEMETRY_CSTR("value2")};
