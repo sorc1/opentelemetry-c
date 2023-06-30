@@ -18,6 +18,7 @@
 #include "attributes_iterable.h"
 #include "headers_carrier.h"
 #include "tracer.h"
+#include "span.h"
 
 namespace common = OPENTELEMETRY_NAMESPACE::common;
 namespace context = OPENTELEMETRY_NAMESPACE::context;
@@ -219,16 +220,16 @@ extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tr
 		auto tracer = reinterpret_cast<trace::OpentelemetryCTracer*>(tracer_);
 
 		if (parent_span == NULL) {
-			auto span = new nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len)));
+			auto span = new trace::OpentelemetryCSpan(nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len))));
 			return reinterpret_cast<opentelemetry_span *>(span);
 		} else {
-			auto parent = reinterpret_cast<nostd::shared_ptr<trace::Span>*>(parent_span);
+			auto parent = reinterpret_cast<trace::OpentelemetryCSpan*>(parent_span);
 			trace::StartSpanOptions options = {
 				common::SystemTimestamp(),
 				common::SteadyTimestamp(),
 				parent->get()->GetContext(),
 			};
-			auto span = new nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options));
+			auto span = new trace::OpentelemetryCSpan(nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options)));
 			return reinterpret_cast<opentelemetry_span *>(span);
 		}
 	} catch (...) {
@@ -238,7 +239,7 @@ extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tr
 
 extern "C" void opentelemetry_span_set_attribute(opentelemetry_span *span_, const opentelemetry_attribute *attribute) {
 	try {
-		auto span = reinterpret_cast<nostd::shared_ptr<trace::Span>*>(span_);
+		auto span = reinterpret_cast<trace::OpentelemetryCSpan*>(span_);
 		common::OpentelemetryCAttributesIterable attrs(attribute, 1);
 		attrs.ForEachKeyValue(
 			[&](nostd::string_view key, opentelemetry::common::AttributeValue value) noexcept {
@@ -253,7 +254,7 @@ extern "C" void opentelemetry_span_add_event(
 	opentelemetry_span *span_, const opentelemetry_string *name, const struct timespec *tp,
 	const opentelemetry_attribute *attributes, size_t nattributes) {
 	try {
-		auto span = reinterpret_cast<nostd::shared_ptr<trace::Span>*>(span_);
+		auto span = reinterpret_cast<trace::OpentelemetryCSpan*>(span_);
 		common::OpentelemetryCAttributesIterable attrs(attributes, nattributes);
 		if (tp == NULL) {
 			span->get()->AddEvent(nostd::string_view(name->ptr, name->len), attrs);
@@ -269,10 +270,10 @@ extern "C" void opentelemetry_span_add_event(
 
 extern "C" int opentelemetry_span_headers_get(opentelemetry_span *span_, opentelemetry_header_each header_each, void *header_each_arg) {
 	try {
-		auto span = reinterpret_cast<nostd::shared_ptr<trace::Span>*>(span_);
+		auto span = reinterpret_cast<trace::OpentelemetryCSpan*>(span_);
 		context::propagation::OpentelemetryCHeadersInjector injector(header_each, header_each_arg);
 		context::Context c;
-		context::Context context = trace::SetSpan(c, *span);
+		context::Context context = trace::SetSpan(c, span->get_shared());
 		trace::propagation::HttpTraceContext().Inject(injector,	context);
 		return 0;
 	} catch (...) {
@@ -297,7 +298,7 @@ extern "C" opentelemetry_span *opentelemetry_span_start_headers(opentelemetry_tr
 			if (!spanContext.IsValid())
 				return NULL;
 		}
-		auto span = new nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options));
+		auto span = new trace::OpentelemetryCSpan(nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options)));
 		return reinterpret_cast<opentelemetry_span *>(span);
 	} catch (...) {
 		return NULL;
@@ -306,7 +307,7 @@ extern "C" opentelemetry_span *opentelemetry_span_start_headers(opentelemetry_tr
 
 extern "C" void opentelemetry_span_finish(opentelemetry_span *span_) {
 	try {
-		auto span = reinterpret_cast<nostd::shared_ptr<trace::Span>*>(span_);
+		auto span = reinterpret_cast<trace::OpentelemetryCSpan*>(span_);
 		if (span == NULL)
 			return;
 		delete span;
