@@ -250,7 +250,7 @@ extern "C" void opentelemetry_span_set_attribute(opentelemetry_span *span_, cons
 
 extern "C" void opentelemetry_span_add_event(
 	opentelemetry_span *span_, const opentelemetry_string *name, const struct timespec *tp,
-	opentelemetry_attribute *attributes, size_t nattributes) {
+	const opentelemetry_attribute *attributes, size_t nattributes) {
 	try {
 		auto span = reinterpret_cast<nostd::shared_ptr<trace::Span>*>(span_);
 		common::OpentelemetryCAttributesIterable attrs(attributes, nattributes);

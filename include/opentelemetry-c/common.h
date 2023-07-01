@@ -191,7 +191,7 @@ opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer, const
 void opentelemetry_span_set_attribute(opentelemetry_span *span, const opentelemetry_attribute *attribute);
 void opentelemetry_span_add_event(
 	opentelemetry_span *span, const opentelemetry_string *name,	const struct timespec *tp,
-	opentelemetry_attribute *attributes, size_t nattributes);
+	const opentelemetry_attribute *attributes, size_t nattributes);
 typedef int (*opentelemetry_header_each)(const char *name, size_t name_len, const char *value, size_t value_len, void *arg);
 int opentelemetry_span_headers_get(opentelemetry_span *span, opentelemetry_header_each header_each, void *header_each_arg);
 typedef const char *(*opentelemetry_header_value)(const char *name, size_t name_len, size_t *value_len, void *arg);
