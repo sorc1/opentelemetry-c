@@ -15,6 +15,7 @@ typedef struct opentelemetry_processor opentelemetry_processor;
 typedef struct opentelemetry_sampler opentelemetry_sampler;
 typedef struct opentelemetry_provider opentelemetry_provider;
 typedef struct opentelemetry_tracer opentelemetry_tracer;
+typedef struct opentelemetry_trace_state opentelemetry_trace_state;
 typedef struct opentelemetry_span opentelemetry_span;
 
 enum opentelemetry_value_type {
@@ -173,10 +174,28 @@ opentelemetry_processor *opentelemetry_processor_multi(
 
 void opentelemetry_processor_destroy(opentelemetry_processor *processor);
 
+opentelemetry_trace_state *opentelemetry_trace_state_create(void);
+bool opentelemetry_trace_state_get(opentelemetry_trace_state *ts, const char *key, size_t key_len, char *value, size_t *value_len);
+opentelemetry_trace_state *opentelemetry_trace_state_set(opentelemetry_trace_state *ts, const char *key, size_t key_len, const char *value, size_t value_len);
+void opentelemetry_trace_state_destroy(opentelemetry_trace_state *ts);
+
+enum opentelemetry_sampling_decision {
+	OPENTELEMETRY_SAMPLING_DESISION_DROP = 0,
+	OPENTELEMETRY_SAMPLING_DESISION_RECORD_ONLY,
+	OPENTELEMETRY_SAMPLING_DESISION_RECORD_AND_SAMPLE,
+};
+
+typedef struct opentelemetry_sampling_result {
+	unsigned decision; // enum opentelemetry_sampling_decision
+	opentelemetry_trace_state *ts;
+} opentelemetry_sampling_result;
+
 opentelemetry_sampler *opentelemetry_sampler_always_on(void);
 opentelemetry_sampler *opentelemetry_sampler_always_off(void);
 opentelemetry_sampler *opentelemetry_sampler_trace_id_ratio(double ratio);
 opentelemetry_sampler *opentelemetry_sampler_parent(opentelemetry_sampler *delegate_sampler);
+typedef bool (*opentelemetry_sampler_parent_root_cb)(opentelemetry_sampling_result *result, void *arg);
+opentelemetry_sampler *opentelemetry_sampler_parent_root(opentelemetry_sampler_parent_root_cb cb, void *arg);
 void opentelemetry_sampler_destroy(opentelemetry_sampler *sampler);
 
 opentelemetry_provider *opentelemetry_provider_create(
@@ -189,6 +208,7 @@ void opentelemetry_tracer_limit_span_size(opentelemetry_tracer *tracer, bool ena
 void opentelemetry_tracer_destroy(opentelemetry_tracer *tracer);
 
 opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer, const opentelemetry_string *name, opentelemetry_span *parent_span);
+opentelemetry_trace_state *opentelemetry_span_trace_state_get(opentelemetry_span *span);
 void opentelemetry_span_set_attribute(opentelemetry_span *span, const opentelemetry_attribute *attribute);
 void opentelemetry_span_add_event(
 	opentelemetry_span *span, const opentelemetry_string *name,	const struct timespec *tp,

@@ -9,6 +9,7 @@ set(TESTS
 	otlp_http_span
 	span_headers
 	span_size_limit
+	trace_state
 )
 
 add_library(testutils STATIC utils.c)

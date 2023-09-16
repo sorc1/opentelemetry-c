@@ -1,6 +1,7 @@
 #include <opentelemetry-c/exporter_jaeger_trace.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 #include "utils.h"
 
 struct oheader {
@@ -16,6 +17,15 @@ struct otheaders {
 	size_t nheaders;
 	int error;
 };
+
+static const struct {
+	opentelemetry_string key;
+	opentelemetry_string value;
+} states[] = {
+	{OPENTELEMETRY_CSTR("mykey1"), OPENTELEMETRY_CSTR("myvalue1")},
+	{OPENTELEMETRY_CSTR("mykey2"), OPENTELEMETRY_CSTR("myvalue2")},
+};
+#define NSTATES (sizeof(states) / sizeof(states[0]))
 
 static int otheaders_each(const char *name, size_t name_len, const char *value, size_t value_len, void *arg) {
 	struct otheaders *ctx = arg;
@@ -61,6 +71,44 @@ static bool otheaders_check_hit(struct otheaders *ctx) {
 	return true;
 }
 
+static bool check_states(opentelemetry_trace_state *ts, size_t count, bool present) {
+	for (size_t i = 0; i != count; i++) {
+		char buf[512];
+		size_t buf_len = sizeof(buf) - 1;
+
+		if (opentelemetry_trace_state_get(ts, states[i].key.ptr, states[i].key.len, buf, &buf_len) != present)
+			return false;
+		if (!present)
+			continue;
+		if (buf_len != states[i].value.len || memcmp(buf, states[i].value.ptr, buf_len))
+			exit(1);
+	}
+	return true;
+}
+
+static bool need_sample(opentelemetry_sampling_result *result, void *arg) {
+	if (arg != (void *)1)
+		exit(1);
+	opentelemetry_trace_state *ts = opentelemetry_trace_state_create();
+	if (ts == NULL)
+		exit(1);
+	if (!check_states(ts, 1, false))
+		exit(1);
+	for (size_t i = 0; i != NSTATES; i++) {
+		opentelemetry_trace_state *ts2 = opentelemetry_trace_state_set(ts, states[i].key.ptr, states[i].key.len, states[i].value.ptr, states[i].value.len);
+		if (ts2 == NULL)
+			exit(1);
+		if (!check_states(ts2, i + 1, true))
+			exit(1);
+		opentelemetry_trace_state_destroy(ts);
+		ts = ts2;
+	}
+	result->decision = OPENTELEMETRY_SAMPLING_DESISION_RECORD_AND_SAMPLE;
+	result->ts = ts;
+
+	return true;
+}
+
 int main(void) {
 	opentelemetry_exporter_jaeger_options exporter_options = {
 		.format = OPENTELEMETRY_C_EXPORTER_JAEGER_FORMAT_THRIFT_UDP_COMPACT,
@@ -76,8 +124,11 @@ int main(void) {
 	opentelemetry_attribute provider_attrs[] = {
 		OPENTELEMETRY_ATTRIBUTE_CSTR("service.name", "myservice"),
 	};
+
+	opentelemetry_sampler *sampler = opentelemetry_sampler_parent_root(need_sample, (void *)1);
+
 	opentelemetry_provider *provider = opentelemetry_provider_create(
-		processor, NULL, provider_attrs, sizeof(provider_attrs) / sizeof(provider_attrs[0]));
+		processor, sampler, provider_attrs, sizeof(provider_attrs) / sizeof(provider_attrs[0]));
 	if (provider == NULL)
 		return 1;
 	opentelemetry_tracer *tracer = opentelemetry_provider_get_tracer(provider, "mylib", "myversion", "myschema");
@@ -92,13 +143,22 @@ int main(void) {
 		return 1;
 	if (otheaders.error)
 		return 1;
-	if (otheaders.nheaders != 1)
+	if (otheaders.nheaders != 2)
 		return 1;
+
+	opentelemetry_trace_state *ts;
+
+	ts = opentelemetry_span_trace_state_get(span);
+	if (ts == NULL || !check_states(ts, NSTATES, true))
+		return 1;
+	opentelemetry_trace_state_destroy(ts);
 
 	opentelemetry_span *subspan = opentelemetry_span_start(
 		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("sub1"), span);
-	if (subspan == NULL)
+	ts = opentelemetry_span_trace_state_get(subspan);
+	if (ts == NULL || !check_states(ts, NSTATES, true))
 		return 1;
+	opentelemetry_trace_state_destroy(ts);
 	opentelemetry_span_finish(subspan);
 
 	opentelemetry_span_finish(span);
@@ -106,16 +166,11 @@ int main(void) {
 	subspan = opentelemetry_span_start_headers(
 		tracer, &(opentelemetry_string)OPENTELEMETRY_CSTR("sub2"),
 		otheaders_header_value, &otheaders);
-	if (subspan == NULL)
+	ts = opentelemetry_span_trace_state_get(subspan);
+	if (ts == NULL || !check_states(ts, NSTATES, true))
 		return 1;
+	opentelemetry_trace_state_destroy(ts);
 	opentelemetry_span_finish(subspan);
-
-	struct otheaders otheaders_empty = {.error = 0};
-	subspan = opentelemetry_span_start_headers(
-		tracer, &(opentelemetry_string)OPENTELEMETRY_CSTR("sub3"),
-		otheaders_header_value, &otheaders_empty);
-	if (subspan != NULL)
-		return 1;
 
 	opentelemetry_tracer_destroy(tracer);
 	opentelemetry_provider_destroy(provider);

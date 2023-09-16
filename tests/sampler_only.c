@@ -13,7 +13,10 @@ int main(void) {
 	if (ratio == NULL)
 		return 1;
 	opentelemetry_sampler *parent = opentelemetry_sampler_parent(ratio);
-	if (ratio == NULL)
+	if (parent == NULL)
+		return 1;
+	opentelemetry_sampler *parent_root = opentelemetry_sampler_parent_root(NULL, NULL);
+	if (parent_root == NULL)
 		return 1;
 	opentelemetry_sampler_destroy(always_on);
 	opentelemetry_sampler_destroy(always_off);
@@ -22,5 +25,6 @@ int main(void) {
 	 * we shouldn't destroy ratio sampler as it was controlled by parent
 	 * sampler and has been already destoyed
 	 */
+	opentelemetry_sampler_destroy(parent_root);
 	return 0;
 }

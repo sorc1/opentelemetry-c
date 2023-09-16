@@ -19,6 +19,7 @@
 #include "headers_carrier.h"
 #include "tracer.h"
 #include "span.h"
+#include "sampler_parent_root.h"
 
 namespace common = OPENTELEMETRY_NAMESPACE::common;
 namespace context = OPENTELEMETRY_NAMESPACE::context;
@@ -111,6 +112,56 @@ extern "C" void opentelemetry_processor_destroy(opentelemetry_processor *process
 	}
 }
 
+extern "C" opentelemetry_trace_state *opentelemetry_trace_state_create(void) {
+	try {
+		auto ts = new nostd::shared_ptr<trace::TraceState>(trace::TraceState::GetDefault());
+		return reinterpret_cast<opentelemetry_trace_state *>(ts);
+	} catch (...) {
+		return NULL;
+	}
+}
+
+extern "C" bool opentelemetry_trace_state_get(opentelemetry_trace_state *ts_, const char *key, size_t key_len, char *value, size_t *value_len) {
+	try {
+		auto ts = reinterpret_cast<nostd::shared_ptr<trace::TraceState> *>(ts_);
+		std::string cpp_value;
+		auto rv = (*ts)->Get(nostd::string_view(key, key_len), cpp_value);
+		if (!rv)
+			return false;
+		size_t cpp_value_len = cpp_value.length();
+		if (cpp_value_len > *value_len)
+			cpp_value_len = *value_len;
+		std::memcpy(value, cpp_value.data(), cpp_value_len);
+		value[cpp_value_len] = '\0';
+		*value_len = cpp_value_len;
+		return true;
+	} catch (...) {
+		return false;
+	}
+}
+
+extern "C" opentelemetry_trace_state *opentelemetry_trace_state_set(opentelemetry_trace_state *ts_, const char *key, size_t key_len, const char *value, size_t value_len) {
+	try {
+		auto ts_old = reinterpret_cast<nostd::shared_ptr<trace::TraceState> *>(ts_);
+		auto ts_new = (*ts_old)->Set(nostd::string_view(key, key_len), nostd::string_view(value, value_len));
+		auto ts = new nostd::shared_ptr<trace::TraceState>(ts_new);
+		return reinterpret_cast<opentelemetry_trace_state *>(ts);
+	} catch (...) {
+		return NULL;
+	}
+}
+
+extern "C" void opentelemetry_trace_state_destroy(opentelemetry_trace_state *ts_) {
+	try {
+		auto ts = reinterpret_cast<nostd::shared_ptr<trace::TraceState> *>(ts_);
+
+		if (ts == nullptr)
+			return;
+		delete ts;
+	} catch (...) {
+	}
+}
+
 extern "C" opentelemetry_sampler *opentelemetry_sampler_always_on(void) {
 	try {
 		auto sampler = new sdktrace::AlwaysOnSampler();
@@ -146,6 +197,15 @@ extern "C" opentelemetry_sampler *opentelemetry_sampler_parent(opentelemetry_sam
 		 * from now, depegate_sampler is under ParentBasedSampler control, we shouldn't
 		 * destroy it explicitly
 		 */
+		return reinterpret_cast<opentelemetry_sampler *>(sampler);
+	} catch (...) {
+		return NULL;
+	}
+}
+
+extern "C" opentelemetry_sampler *opentelemetry_sampler_parent_root(opentelemetry_sampler_parent_root_cb cb, void *arg) {
+	try {
+		auto sampler = new sdktrace::OpentelemetryCParentRootSampler(cb, arg);
 		return reinterpret_cast<opentelemetry_sampler *>(sampler);
 	} catch (...) {
 		return NULL;
@@ -248,6 +308,20 @@ extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tr
 			span = new trace::OpentelemetryCSpan(tracer, nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options)));
 		}
 		return reinterpret_cast<opentelemetry_span *>(span);
+	} catch (...) {
+		return NULL;
+	}
+}
+
+extern "C" opentelemetry_trace_state *opentelemetry_span_trace_state_get(opentelemetry_span *span_) {
+	try {
+		auto span = reinterpret_cast<trace::OpentelemetryCSpan*>(span_);
+		auto context = span->get()->GetContext();
+		auto context_ts = context.trace_state();
+		if (context_ts == nullptr)
+			return NULL;
+		auto ts = new nostd::shared_ptr<trace::TraceState>(context_ts);
+		return reinterpret_cast<opentelemetry_trace_state *>(ts);
 	} catch (...) {
 		return NULL;
 	}
