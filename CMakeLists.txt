@@ -36,7 +36,7 @@ install(
 	PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 install(DIRECTORY
-	include
+	include/opentelemetry-c
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
