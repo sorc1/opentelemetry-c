@@ -1,5 +1,5 @@
-project(opentelemetry-c C CXX)
 cmake_minimum_required(VERSION 3.0.0)
+project(opentelemetry-c VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -18,7 +18,7 @@ add_library(opentelemetry-c SHARED
 )
 target_include_directories(opentelemetry-c PUBLIC include)
 target_compile_definitions(opentelemetry-c PRIVATE -DENABLE_ASYNC_EXPORT)
-set_target_properties(opentelemetry-c PROPERTIES POSITION_INDEPENDET_CODE ON)
+set_target_properties(opentelemetry-c PROPERTIES POSITION_INDEPENDET_CODE ON VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 #set_target_properties(opentelemetry-c PROPERTIES PUBLIC_HEADER "include/opentelemetry-c/*.h")
 target_link_libraries(opentelemetry-c PUBLIC
 	opentelemetry_common
