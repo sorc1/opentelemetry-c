@@ -291,6 +291,11 @@ extern "C" opentelemetry_span *opentelemetry_span_start_headers(opentelemetry_tr
 				common::SteadyTimestamp(),
 				sp->GetContext(),
 		};
+		if (nostd::holds_alternative<trace::SpanContext>(options.parent)) {
+			auto spanContext = nostd::get<trace::SpanContext>(options.parent);
+			if (!spanContext.IsValid())
+				return NULL;
+		}
 		auto span = new nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options));
 		return reinterpret_cast<opentelemetry_span *>(span);
 	} catch (...) {

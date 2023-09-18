@@ -97,6 +97,8 @@ int main(void) {
 
 	opentelemetry_span *subspan = opentelemetry_span_start(
 		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("sub1"), span);
+	if (subspan == NULL)
+		return 1;
 	opentelemetry_span_finish(subspan);
 
 	opentelemetry_span_finish(span);
@@ -104,7 +106,16 @@ int main(void) {
 	subspan = opentelemetry_span_start_headers(
 		tracer, &(opentelemetry_string)OPENTELEMETRY_CSTR("sub2"),
 		otheaders_header_value, &otheaders);
+	if (subspan == NULL)
+		return 1;
 	opentelemetry_span_finish(subspan);
+
+	struct otheaders otheaders_empty = {.error = 0};
+	subspan = opentelemetry_span_start_headers(
+		tracer, &(opentelemetry_string)OPENTELEMETRY_CSTR("sub3"),
+		otheaders_header_value, &otheaders_empty);
+	if (subspan != NULL)
+		return 1;
 
 	opentelemetry_tracer_destroy(tracer);
 	opentelemetry_provider_destroy(provider);
