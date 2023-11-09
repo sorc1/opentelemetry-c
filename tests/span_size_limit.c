@@ -91,6 +91,9 @@ int main(void) {
 
 	for (size_t i = 0; i != sizeof(string_attrs) / sizeof(string_attrs[0]); i++)
 		free((void *)string_attrs[i].value.s.ptr);
+	opentelemetry_span *subsubspan = opentelemetry_span_start(
+		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("child"), subspan);
+	opentelemetry_span_finish(subsubspan);
 	opentelemetry_span_finish(subspan);
 
 	subspan = opentelemetry_span_start(
