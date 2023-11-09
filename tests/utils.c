@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 
 const char *test_jaeger_endpoint(void) {
 	char *name = getenv("JAEGER_ENDPOINT");
@@ -140,7 +141,7 @@ int test_span(opentelemetry_processor *processor) {
 	if (tracer == NULL)
 		return 1;
 	opentelemetry_tracer_destroy(tracer);
-
+	usleep(10000);
 	opentelemetry_provider_destroy(provider);
 	return 0;
 }
