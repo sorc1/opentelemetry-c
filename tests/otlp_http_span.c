@@ -4,9 +4,10 @@
 
 int main(void) {
 	opentelemetry_exporter_otlp_http_options exporter_options = {
-		// Use OTEL_EXPORTER_OTLP_ENDPOINT environment variable to really send
-		// traces. For example:
-		// OTEL_EXPORTER_OTLP_ENDPOINT='http://172.19.0.1:4318/v1/traces'
+		// Use OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+		// environment variables to really send traces. For example:
+		// OTEL_EXPORTER_OTLP_ENDPOINT='http://172.19.0.1:4318'
+		// OTEL_EXPORTER_OTLP_TRACES_ENDPOINT='http://172.19.0.1:4318/v1/traces'
 		//.url = "http://172.19.0.1:4318/v1/traces",
 		//.content_type = OPENTELEMETRY_C_EXPORTER_OTLP_HTTP_CONTENT_TYPE_BINARY,
 		//.json_bytes_mapping = OPENTELEMETRY_C_EXPORTER_OTLP_HTTP_JSON_BMAPPING_KBASE64,
