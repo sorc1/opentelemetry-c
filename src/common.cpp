@@ -303,7 +303,7 @@ extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tr
 			trace::StartSpanOptions options = {
 				common::SystemTimestamp(),
 				common::SteadyTimestamp(),
-				parent->get()->GetContext(),
+				parent->get_context(),
 			};
 			span = new trace::OpentelemetryCSpan(tracer, nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options)));
 		}
@@ -316,7 +316,7 @@ extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tr
 extern "C" opentelemetry_trace_state *opentelemetry_span_trace_state_get(opentelemetry_span *span_) {
 	try {
 		auto span = reinterpret_cast<trace::OpentelemetryCSpan*>(span_);
-		auto context = span->get()->GetContext();
+		auto context = span->get_context();
 		auto context_ts = context.trace_state();
 		if (context_ts == nullptr)
 			return NULL;

@@ -15,6 +15,7 @@ public:
     OpentelemetryCSpan(OpentelemetryCTracer *tracer, nostd::shared_ptr<Span> &&span):
         _tracer(tracer), _span(std::move(span)), context(_span->GetContext()) { }
     Span *get() { return _span.get(); }
+    trace::SpanContext get_context() { return context; }
     nostd::shared_ptr<Span> get_shared() { return _span; }
 
     bool HasSpanSizeLimit() { return _tracer->HasSpanSizeLimit(); }
