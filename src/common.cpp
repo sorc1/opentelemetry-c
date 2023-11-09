@@ -291,19 +291,33 @@ extern "C" void opentelemetry_tracer_destroy(opentelemetry_tracer *tracer_) {
 	}
 }
 
-extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer_, const opentelemetry_string *name, opentelemetry_span *parent_span) {
+extern "C" opentelemetry_span *opentelemetry_span_start2(opentelemetry_tracer *tracer_, const opentelemetry_string *name, opentelemetry_span *parent_span, unsigned kind_) {
 	try {
 		auto tracer = reinterpret_cast<trace::OpentelemetryCTracer*>(tracer_);
+		trace::SpanKind kind;
+
+		switch (kind_) {
+		case OPENTELEMETRY_SPAN_KIND_INTERNAL: kind = trace::SpanKind::kInternal; break;
+		case OPENTELEMETRY_SPAN_KIND_SERVER: kind = trace::SpanKind::kServer; break;
+		case OPENTELEMETRY_SPAN_KIND_CLIENT: kind = trace::SpanKind::kClient; break;
+		case OPENTELEMETRY_SPAN_KIND_PRODUCER: kind = trace::SpanKind::kProducer; break;
+		case OPENTELEMETRY_SPAN_KIND_CONSUMER: kind = trace::SpanKind::kConsumer; break;
+		default:
+			return NULL;
+		}
 
 		trace::OpentelemetryCSpan *span;
 		if (parent_span == NULL) {
-			span = new trace::OpentelemetryCSpan(tracer, nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len))));
+			trace::StartSpanOptions options;
+			options.kind = kind;
+			span = new trace::OpentelemetryCSpan(tracer, nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options)));
 		} else {
 			auto parent = reinterpret_cast<trace::OpentelemetryCSpan*>(parent_span);
 			trace::StartSpanOptions options = {
 				common::SystemTimestamp(),
 				common::SteadyTimestamp(),
 				parent->get_context(),
+				kind,
 			};
 			span = new trace::OpentelemetryCSpan(tracer, nostd::shared_ptr<trace::Span>(tracer->get()->StartSpan(nostd::string_view(name->ptr, name->len), options)));
 		}
@@ -311,6 +325,10 @@ extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tr
 	} catch (...) {
 		return NULL;
 	}
+}
+
+extern "C" opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer_, const opentelemetry_string *name, opentelemetry_span *parent_span) {
+	return opentelemetry_span_start2(tracer_, name, parent_span, OPENTELEMETRY_SPAN_KIND_INTERNAL);
 }
 
 extern "C" opentelemetry_trace_state *opentelemetry_span_trace_state_get(opentelemetry_span *span_) {

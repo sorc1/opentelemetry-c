@@ -131,7 +131,11 @@ int test_span(opentelemetry_processor *processor) {
 		span, &(opentelemetry_string)OPENTELEMETRY_CSTR("myevent2"), NULL, NULL, 0);
 
 	opentelemetry_span *subspan = opentelemetry_span_start(
-		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("sub"), span);
+		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("sub1"), span);
+	opentelemetry_span_finish(subspan);
+
+	subspan = opentelemetry_span_start2(
+		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("sub2"), span, OPENTELEMETRY_SPAN_KIND_SERVER);
 	opentelemetry_span_finish(subspan);
 
 	opentelemetry_span_finish(span);

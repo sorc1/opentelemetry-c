@@ -18,6 +18,14 @@ typedef struct opentelemetry_tracer opentelemetry_tracer;
 typedef struct opentelemetry_trace_state opentelemetry_trace_state;
 typedef struct opentelemetry_span opentelemetry_span;
 
+enum opentelemetry_span_kind {
+	OPENTELEMETRY_SPAN_KIND_INTERNAL = 0,
+	OPENTELEMETRY_SPAN_KIND_SERVER,
+	OPENTELEMETRY_SPAN_KIND_CLIENT,
+	OPENTELEMETRY_SPAN_KIND_PRODUCER,
+	OPENTELEMETRY_SPAN_KIND_CONSUMER,
+};
+
 enum opentelemetry_value_type {
 	OPENTELEMETRY_TYPE_BOOL = 0,
 	OPENTELEMETRY_TYPE_INT32,
@@ -208,6 +216,8 @@ void opentelemetry_tracer_limit_span_size(opentelemetry_tracer *tracer, bool ena
 void opentelemetry_tracer_destroy(opentelemetry_tracer *tracer);
 
 opentelemetry_span *opentelemetry_span_start(opentelemetry_tracer *tracer, const opentelemetry_string *name, opentelemetry_span *parent_span);
+/* kind is of enum opentelemetry_span_kind */
+opentelemetry_span *opentelemetry_span_start2(opentelemetry_tracer *tracer, const opentelemetry_string *name, opentelemetry_span *parent_span, unsigned kind);
 opentelemetry_trace_state *opentelemetry_span_trace_state_get(opentelemetry_span *span);
 void opentelemetry_span_set_attribute(opentelemetry_span *span, const opentelemetry_attribute *attribute);
 void opentelemetry_span_add_event(
