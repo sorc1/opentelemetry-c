@@ -42,6 +42,7 @@ int main(void) {
 		{.name = OPENTELEMETRY_CSTR("str300"), .size = 300},
 		{.name = OPENTELEMETRY_CSTR("str40000_1"), .size = 40000},
 		{.name = OPENTELEMETRY_CSTR("str40000_2"), .size = 40000},
+		{.name = OPENTELEMETRY_CSTR("1234567"), .size = 59986},
 		{.name = OPENTELEMETRY_CSTR("str180000"), .size = 180000},
 		{.name = OPENTELEMETRY_CSTR("str50"), .size = 50},
 		{.name = OPENTELEMETRY_CSTR("str60"), .size = 60},

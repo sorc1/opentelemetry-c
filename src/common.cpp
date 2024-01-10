@@ -427,7 +427,7 @@ static void opentelemetry_span_add_event_attribute_chunked_as_partial(
 		if (size > SPAN_LOG_SPLIT) {
 			size_t orig_len = str.len;
 
-			str.len = SPAN_LOG_SPLIT - RAW_STRING_LEN(&vattr.name);
+			str.len = SPAN_LOG_SPLIT - (size - orig_len);
 			opentelemetry_span_add_event_attributes(span, name, tp, &vattr, 1);
 			span->Reopen();
 			str.ptr += str.len;
@@ -521,7 +521,7 @@ static void opentelemetry_span_add_event_attribute_chunked(
 			if (!(done = (size <= SPAN_LOG_SPLIT))) {
 				size_t orig_len = lattr.value.s.len;
 
-				lattr.value.s.len = SPAN_LOG_SPLIT - RAW_STRING_LEN(&lattr.name);
+				lattr.value.s.len = SPAN_LOG_SPLIT - (size - orig_len);
 				opentelemetry_span_add_event_attributes(span, name, tp, &lattr, 1);
 				span->Reopen();
 				lattr.value.s.ptr += lattr.value.s.len;
