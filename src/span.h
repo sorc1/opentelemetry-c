@@ -2,7 +2,7 @@
 #include <opentelemetry/trace/span.h>
 #include "tracer.h"
 
-#define SPAN_LOG_SPLIT 60000
+#define SPAN_LOG_SPLIT 40000
 #define SPAN_LOG_NAME_LEN_MAX 3000
 
 OPENTELEMETRY_BEGIN_NAMESPACE
