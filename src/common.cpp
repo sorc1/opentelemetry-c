@@ -1,5 +1,6 @@
 #include <opentelemetry-c/common.h>
 #include <opentelemetry/nostd/shared_ptr.h>
+#include <opentelemetry/nostd/span.h>
 #include <opentelemetry/nostd/string_view.h>
 #include <opentelemetry/sdk/common/global_log_handler.h>
 #include <opentelemetry/sdk/trace/exporter.h>
@@ -13,8 +14,10 @@
 #include <opentelemetry/sdk/trace/samplers/trace_id_ratio.h>
 #include <opentelemetry/sdk/trace/samplers/parent.h>
 #include <opentelemetry/sdk/trace/tracer_provider.h>
+#include <opentelemetry/trace/trace_id.h>
 #include <opentelemetry/trace/tracer_provider.h>
 #include <opentelemetry/trace/propagation/http_trace_context.h>
+#include <opentelemetry/trace/span_id.h>
 #include "attributes_iterable.h"
 #include "headers_carrier.h"
 #include "tracer.h"
@@ -645,4 +648,42 @@ extern "C" void opentelemetry_set_log_level(int log_level) {
 			static_cast<sdkcommon::internal_log::LogLevel>(log_level));
 	} catch (...) {
 	}
+}
+
+extern "C" ssize_t opentelemetry_span_get_trace_id(opentelemetry_span* span, char* buffer, size_t buffer_size) {
+    constexpr size_t required_buffer_size = trace::TraceId::kSize * 2;
+	try {
+		auto cspan = reinterpret_cast<trace::OpentelemetryCSpan*>(span);
+		if (!cspan)
+			return -1;
+		auto span_context = cspan->get_context();
+		if (!span_context.IsValid())
+			return -1;
+        if (buffer_size < required_buffer_size)
+            return required_buffer_size;
+        nostd::span<char, required_buffer_size> trace_id_buffer(buffer, required_buffer_size);
+        span_context.trace_id().ToLowerBase16(trace_id_buffer);
+	} catch (...) {
+		return -1;
+	}
+    return required_buffer_size;
+}
+
+extern "C" ssize_t opentelemetry_span_get_span_id(opentelemetry_span* span, char* buffer, size_t buffer_size) {
+    constexpr size_t required_buffer_size = trace::SpanId::kSize * 2;
+	try {
+		auto cspan = reinterpret_cast<trace::OpentelemetryCSpan*>(span);
+		if (!cspan)
+			return -1;
+		auto span_context = cspan->get_context();
+		if (!span_context.IsValid())
+			return -1;
+        if (buffer_size < required_buffer_size)
+            return required_buffer_size;
+        nostd::span<char, required_buffer_size> span_id_buffer(buffer, required_buffer_size);
+        span_context.span_id().ToLowerBase16(span_id_buffer);
+	} catch (...) {
+		return -1;
+	}
+    return required_buffer_size;
 }

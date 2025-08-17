@@ -1,0 +1,7 @@
+[requires]
+opentelemetry-cpp/1.9.1
+
+[generators]
+CMakeDeps
+CMakeToolchain
+

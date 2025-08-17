@@ -101,6 +101,14 @@ int test_span(opentelemetry_processor *processor) {
 		tracer,  &(opentelemetry_string)OPENTELEMETRY_CSTR("root"), NULL);
 	if (span == NULL)
 		return 1;
+
+	char trace_id[32];
+	if (opentelemetry_span_get_trace_id(span, trace_id, 32) != 32)
+		return 1;
+	char span_id[16];
+	if (opentelemetry_span_get_span_id(span, span_id, 16) != 16)
+		return 1;
+
 	double dvalues1[] = {4.4, 5.5, 6.6};
 	double dvalues2[] = {7.7, 8.8, 9.9};
 	opentelemetry_attribute span_attrs[] = {

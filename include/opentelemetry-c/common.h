@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
 #include <time.h>
 
 #ifdef  __cplusplus
@@ -221,13 +222,15 @@ opentelemetry_span *opentelemetry_span_start2(opentelemetry_tracer *tracer, cons
 opentelemetry_trace_state *opentelemetry_span_trace_state_get(opentelemetry_span *span);
 void opentelemetry_span_set_attribute(opentelemetry_span *span, const opentelemetry_attribute *attribute);
 void opentelemetry_span_add_event(
-	opentelemetry_span *span, const opentelemetry_string *name,	const struct timespec *tp,
+	opentelemetry_span *span, const opentelemetry_string *name, const struct timespec *tp,
 	const opentelemetry_attribute *attributes, size_t nattributes);
 typedef int (*opentelemetry_header_each)(const char *name, size_t name_len, const char *value, size_t value_len, void *arg);
 int opentelemetry_span_headers_get(opentelemetry_span *span, opentelemetry_header_each header_each, void *header_each_arg);
 typedef const char *(*opentelemetry_header_value)(const char *name, size_t name_len, size_t *value_len, void *arg);
 opentelemetry_span *opentelemetry_span_start_headers(opentelemetry_tracer *tracer, const opentelemetry_string *name, opentelemetry_header_value header_value, void *header_value_arg);
 void opentelemetry_span_finish(opentelemetry_span *span);
+ssize_t opentelemetry_span_get_trace_id(opentelemetry_span* span, char* buffer, size_t buffer_size);
+ssize_t opentelemetry_span_get_span_id(opentelemetry_span* span, char* buffer, size_t buffer_size);
 
 enum opentelemetry_log_level {
 	OPENTELEMETRY_LOG_LEVEL_ERROR = 0,
